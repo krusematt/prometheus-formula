@@ -130,10 +130,18 @@ prometheus-archive-install-{{ name }}-managed-service:
         stop: ''
                {%- if name in ('node_exporter', 'consul_exporter') or 'config_file' not in p.pkg.component[name] %}
                  {%- set args = [] %}
+                 {%- set prepend_args = [] %}
                  {%- for param, value in p.pkg.component.get(name).get('service').get('args', {}).items() %}
-                    {% do args.append("--" ~ param ~ "=" ~ value ) %}
+                     {%- if name == 'thanos' and param == 'sidecar' %}
+                         {%- do prepend_args.append(param) -%}
+                     {%- else %}
+                       {% do args.append("--" ~ param ~ "=" ~ value ) %}
+                     {%- endif %}
                  {%- endfor %}
-        start: {{ p.pkg.component[name]['path'] }}/{{ name }} {{ args|join(' ') }}
+                 {%- for value in args %}
+                   {%- do prepend_args.append(value) %}
+                 {%- endfor %}
+        start: {{ p.pkg.component[name]['path'] }}/{{ name }} {{ prepend_args|join(' ') }}
                {%- else %}
         start: {{ p.pkg.component[name]['path'] }}/{{ name }} --config.file {{ p.pkg.component[name]['config_file'] }}  # noqa 204
                {%- endif %}
