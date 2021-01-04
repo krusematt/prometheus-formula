@@ -132,7 +132,13 @@ prometheus-archive-install-{{ name }}-managed-service:
                  {%- set cmd = ' ' ~ p.pkg.component.get(name).get('service').get('command', '') %}
                  {%- set args = [] %}
                  {%- for param, value in p.pkg.component.get(name).get('service').get('args', {}).items() %}
-                   {% do args.append("--" ~ param ~ "=" ~ value ) %}
+                     {%- if value is string %}
+                       {% do args.append("--" ~ param ~ "=" ~ value ) %}
+                     {%- else  %}
+                       {% for itm in value %}
+                         {% do args.append("--" ~ param ~ "=" ~ itm) %}
+                       {%- endfor %}
+                     {%- endif %}
                  {%- endfor %}
         start: {{ p.pkg.component[name]['path'] }}/{{ name }}{{ cmd }} {{ args|join(' ') }}
                {%- else %}
